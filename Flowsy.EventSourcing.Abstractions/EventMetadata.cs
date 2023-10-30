@@ -5,19 +5,22 @@ namespace Flowsy.EventSourcing.Abstractions;
 /// </summary>
 public class EventMetadata
 {
-    public EventMetadata(string eventName, string typeName)
+    public EventMetadata(string version, string eventType, string fullyQualifiedName)
     {
-        EventName = eventName;
-        TypeName = typeName;
+        Version = version;
+        EventType = eventType;
+        FullyQualifiedName = fullyQualifiedName;
     }
 
-    /// <summary>
-    /// The name of the event associated to TypeName.
-    /// </summary>
-    public string EventName { get; }
+    public string Version { get; }
 
     /// <summary>
-    /// Type name used to create instances of event objects when reading them from an event store.
+    /// The type of event associated to this metadata.
     /// </summary>
-    public string TypeName { get; }
+    public string EventType { get; }
+
+    /// <summary>
+    /// Fully qualified name of the .NET type used to create instances of event objects when reading them from an event store.
+    /// </summary>
+    public string FullyQualifiedName { get; }
 }
