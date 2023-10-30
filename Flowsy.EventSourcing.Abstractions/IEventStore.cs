@@ -24,7 +24,7 @@ public interface IEventStore<TEvent> : IDisposable, IAsyncDisposable
     /// <param name="correlationId">The correlation ID for the event.</param>
     /// <param name="cancellationToken">The cancellation token for the asynchronous task.</param>
     /// <returns>An asyncronous task.</returns>
-    Task SaveAsync(string key, TEvent @event, string correlationId, CancellationToken cancellationToken);
+    Task SaveAsync(string key, TEvent @event, string? correlationId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Saves a list of events.
@@ -40,10 +40,10 @@ public interface IEventStore<TEvent> : IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="key">The key associated with the events.</param>
     /// <param name="events">The events being saved.</param>
-    /// <param name="correlationId">The correlation ID for the event.</param>
+    /// <param name="correlationId">The correlation ID for the events.</param>
     /// <param name="cancellationToken">The cancellation token for the asynchronous task.</param>
     /// <returns>An asyncronous task.</returns>
-    Task SaveAsync(string key, IEnumerable<TEvent> events, string correlationId, CancellationToken cancellationToken);
+    Task SaveAsync(string key, IEnumerable<TEvent> events, string? correlationId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Loads a list of events associated with the given key.
