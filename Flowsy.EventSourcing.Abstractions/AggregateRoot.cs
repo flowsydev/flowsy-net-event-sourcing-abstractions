@@ -76,6 +76,22 @@ public abstract class AggregateRoot<TEvent>
     /// <returns>An asynchronous task.</returns>
     protected virtual Task ApplyAsync(TEvent @event, CancellationToken cancellationToken)
         => Task.Run(() => Apply(@event), cancellationToken);
+
+    /// <summary>
+    /// Validates the given event and then applies it to this aggregate root.
+    /// If the validation fails, an EventValidationException&lt;TEvent&gt; is thrown.
+    /// </summary>
+    /// <param name="event">The event to validate and apply.</param>
+    /// <exception cref="EventValidationException{TEvent}">The exception holding the validation result.</exception>
+    protected virtual void ApplyChange(TEvent @event)
+    {
+        var validationResult = Validate(@event);
+        if (!validationResult.IsSuccessful)
+            throw new EventValidationException<TEvent>(validationResult);
+
+        Apply(@event);
+        _events.Add(@event);
+    }
     
     /// <summary>
     /// Validates the given event and then applies it to this aggregate root.
