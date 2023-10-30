@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Flowsy.EventSourcing.Abstractions</RootNamespace>
+        <LangVersion>11</LangVersion>
+
+        <Title>Flowsy Event Sourcing Abstractions</Title>
+        <Description>
+            Basic abstractions for designing applications with an event store as their source of truth.
+        </Description>
+
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/flowsydev/flowsy-net-event-sourcing-abstractions</RepositoryUrl>
+
+        <PackageVersion>0.1.0</PackageVersion>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+
+        <NoWarn>$(NoWarn);NU5118;NU5128</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Update="Resources\Strings.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Resources\Strings.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Strings.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+</Project>
