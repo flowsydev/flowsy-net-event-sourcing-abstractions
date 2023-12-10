@@ -482,6 +482,76 @@ public class PlaceShoppingCartOrderCommandHandler
 }
 ```
 
+
+## Publishing Events
+By implementing the **IEventPublisher** interface we can notify another components of our application when something relevant occurs.
+For instance, we could define an abstract Event class and inherit all our events from it, then use the [MediatR](https://www.nuget.org/packages/MediatR)
+library to publish our event as a notification.
+
+The **AggregateRepository** class from the [Flowsy.EventSourcing.Sql](https://www.nuget.org/packages/Flowsy.EventSourcing.Sql) package
+implements the **IAggregateRepository** interface defined in this package and accepts an optional **IEventPublisher** instance through
+its constructor, so it can automatically publish the events of an **AggregateRoot** once they are persisted in the event store.
+
+
+### Abstract Event Class
+We could even use this class to define additional properties to be inherited by all the events in our application.
+```csharp
+public abstract class Event 
+    : IEvent, INotification // INotification comes from MediatR
+{    
+    protected Event(string initiationUserId)
+    {
+        // The initiation instant will always be the exact moment the event object is instantiated.
+        // This can be useful to sort events chronologically even before they are persisted in the event store.
+        InitiationInstant = DateTimeOffset.Now;
+        
+        // We could include a user ID to keep track of the users initiating the application events. 
+        InitiationUserId = initiationUserId;
+    }
+
+    public DateTimeOffset InitiationInstant { get; }
+    public string InitiationUserId { get; }
+}
+```
+
+### Event Publisher
+```csharp
+public sealed class EventPublisher : IEventPublisher
+{
+    private readonly IPublisher _mediatorPublisher;
+
+    public EventPublisher(IPublisher mediatorPublisher)
+    {
+        _mediatorPublisher = mediatorPublisher;
+    }
+
+    // Publish events asynchronously
+    public async Task PublishAsync(IEnumerable<IEvent> events, CancellationToken cancellationToken)
+    {
+        foreach (var e in events.Where(e => e is INotification))
+            await _mediatorPublisher.Publish(e, cancellationToken);
+    }
+
+    // Publish events without waiting for a task for termination.
+    public void PublishAndForget(IEnumerable<IEvent> events)
+    {
+        Task.Run(() =>
+        {
+            try
+            {
+                PublishAsync(events, CancellationToken.None).Wait();
+            }
+            catch (Exception exception)
+            {
+                // Handle the exception
+            }
+        });
+    }
+}
+```
+
+
+## Important Note
 The previous examples were written only to show how to use the abstractions included in this package,
 in real applications, there are more elements to consider, such as distributed transactions,
 error handling, logging and so on.
