@@ -2,5 +2,7 @@ namespace Flowsy.EventSourcing.Abstractions;
 
 public interface IEventPublisher<in TEvent> where TEvent : IEvent
 {
-    Task PublishAsync(string key, IEnumerable<TEvent> events, CancellationToken cancellationToken);
+    Task PublishAsync(IEnumerable<IEvent> events, CancellationToken cancellationToken);
+    
+    void PublishAndForget(IEnumerable<IEvent> events);
 }

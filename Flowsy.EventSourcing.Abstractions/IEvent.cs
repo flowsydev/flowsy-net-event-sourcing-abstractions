@@ -5,4 +5,5 @@ namespace Flowsy.EventSourcing.Abstractions;
 /// </summary>
 public interface IEvent
 {
+    DateTimeOffset InitiationInstant { get; }
 }

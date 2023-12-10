@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Flowsy.EventSourcing.Abstractions</RootNamespace>
-        <LangVersion>11</LangVersion>
+        <LangVersion>12</LangVersion>
 
         <Title>Flowsy Event Sourcing Abstractions</Title>
         <Description>
@@ -15,7 +15,7 @@
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/flowsydev/flowsy-net-event-sourcing-abstractions</RepositoryUrl>
 
-        <PackageVersion>0.3.0</PackageVersion>
+        <PackageVersion>1.0.0</PackageVersion>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
 
@@ -39,6 +39,11 @@
         <AutoGen>True</AutoGen>
         <DependentUpon>Strings.resx</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="System.Text.Json" Version="8.0.0" />
     </ItemGroup>
 
 </Project>
