@@ -1,6 +1,6 @@
 namespace Flowsy.EventSourcing.Abstractions;
 
-public interface IEventPublisher<in TEvent> where TEvent : IEvent
+public interface IEventPublisher
 {
     Task PublishAsync(IEnumerable<IEvent> events, CancellationToken cancellationToken);
     
