@@ -12,7 +12,7 @@ public interface IEventRepository : IDisposable, IAsyncDisposable
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
     /// <typeparam name="TEventSource">The type of the event source.</typeparam>
     Task StoreAsync<TEventSource>(TEventSource eventSource, CancellationToken cancellationToken)
-        where TEventSource : IEventSource;
+        where TEventSource : class, IEventSource;
     
     /// <summary>
     /// Loads an event source from an event store.
@@ -22,7 +22,7 @@ public interface IEventRepository : IDisposable, IAsyncDisposable
     /// <typeparam name="TEventSource">The type of the event source.</typeparam>
     /// <returns>An instance of the event source if any is found using the provided ID.</returns>
     Task<TEventSource?> LoadAsync<TEventSource>(string id, CancellationToken cancellationToken)
-        where TEventSource : IEventSource;
+        where TEventSource : class, IEventSource;
 
     /// <summary>
     /// Loads an event source from an event store.
@@ -40,5 +40,5 @@ public interface IEventRepository : IDisposable, IAsyncDisposable
         long? toVersion = null,
         DateTimeOffset? timestamp = null,
         CancellationToken cancellationToken = default
-    ) where TEventSource : IEventSource;
+    ) where TEventSource : class, IEventSource;
 }
