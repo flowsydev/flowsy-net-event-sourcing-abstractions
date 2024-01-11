@@ -10,14 +10,9 @@ public interface IEventRepository : IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="eventSource">The event source with events to be persisted.</param>
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
-    Task StoreAsync(IEventSource eventSource, CancellationToken cancellationToken);
-    
-    /// <summary>
-    /// Stores the events of a list of event sources.
-    /// </summary>
-    /// <param name="eventSources">A list of event sources with events to be persisted.</param>
-    /// <param name="cancellationToken">The cancellation token for the operation.</param>
-    Task StoreAsync(IEnumerable<IEventSource> eventSources, CancellationToken cancellationToken);
+    /// <typeparam name="TEventSource">The type of the event source.</typeparam>
+    Task StoreAsync<TEventSource>(TEventSource eventSource, CancellationToken cancellationToken)
+        where TEventSource : IEventSource;
     
     /// <summary>
     /// Loads an event source from an event store.
