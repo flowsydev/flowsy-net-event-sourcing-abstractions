@@ -5,6 +5,12 @@ namespace Flowsy.EventSourcing.Abstractions;
 /// </summary>
 public interface IEventPublisher
 {
+    /// <summary>
+    /// Publishes events asynchronously.
+    /// </summary>
+    /// <param name="eventSource">The event source with events to publish.</param>
+    /// <param name="cancellationToken">The cancellation token for the operation.</param>
+    Task PublishAsync(IEventSource eventSource, CancellationToken cancellationToken);
     
     /// <summary>
     /// Publishes events asynchronously.
@@ -12,6 +18,12 @@ public interface IEventPublisher
     /// <param name="events">The events to publish.</param>
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
     Task PublishAsync(IEnumerable<IEvent> events, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Publishes events without waiting for a task for termination.
+    /// </summary>
+    /// <param name="eventSource">The event source with events to publish.</param>
+    void PublishAndForget(IEventSource eventSource);
     
     /// <summary>
     /// Publishes events without waiting for a task for termination.
