@@ -28,6 +28,17 @@ public interface IEventRepository : IDisposable, IAsyncDisposable
     /// Loads an event source from an event store.
     /// </summary>
     /// <param name="id">The key that groups a related set of events for an event source.</param>
+    /// <param name="configure">Action to configure the loaded event source before usage.</param>
+    /// <param name="cancellationToken">The cancellation token for the operation.</param>
+    /// <typeparam name="TEventSource">The type of the event source.</typeparam>
+    /// <returns>An instance of the event source if any is found using the provided ID.</returns>
+    Task<TEventSource?> LoadAsync<TEventSource>(string id, Action<TEventSource> configure, CancellationToken cancellationToken)
+        where TEventSource : class, IEventSource;
+
+    /// <summary>
+    /// Loads an event source from an event store.
+    /// </summary>
+    /// <param name="id">The key that groups a related set of events for an event source.</param>
     /// <param name="fromVersion">If set, queries for events on or from this version.</param>
     /// <param name="toVersion">If set, queries for events up to and including this version.</param>
     /// <param name="timestamp">If set, queries for events captured on or before this timestamp.</param>
@@ -39,6 +50,26 @@ public interface IEventRepository : IDisposable, IAsyncDisposable
         long? fromVersion = null,
         long? toVersion = null,
         DateTimeOffset? timestamp = null,
+        CancellationToken cancellationToken = default
+    ) where TEventSource : class, IEventSource;
+
+    /// <summary>
+    /// Loads an event source from an event store.
+    /// </summary>
+    /// <param name="id">The key that groups a related set of events for an event source.</param>
+    /// <param name="fromVersion">If set, queries for events on or from this version.</param>
+    /// <param name="toVersion">If set, queries for events up to and including this version.</param>
+    /// <param name="timestamp">If set, queries for events captured on or before this timestamp.</param>
+    /// <param name="configure">Action to configure the loaded event source before usage.</param>
+    /// <param name="cancellationToken">The cancellation token for the operation.</param>
+    /// <typeparam name="TEventSource">The type of the event source.</typeparam>
+    /// <returns>An instance of the event source if any is found using the provided ID.</returns>
+    Task<TEventSource?> LoadAsync<TEventSource>(
+        string id,
+        long? fromVersion = null,
+        long? toVersion = null,
+        DateTimeOffset? timestamp = null,
+        Action<TEventSource>? configure = null,
         CancellationToken cancellationToken = default
     ) where TEventSource : class, IEventSource;
 }
