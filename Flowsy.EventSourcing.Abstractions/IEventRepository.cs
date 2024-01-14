@@ -6,13 +6,27 @@ namespace Flowsy.EventSourcing.Abstractions;
 public interface IEventRepository : IDisposable, IAsyncDisposable
 {
     /// <summary>
+    /// Begins a deferred persistence operation.
+    /// Events will be appended to the stream but they will be permanently persisted (commited) until SaveChangesAsync is invoked.
+    /// </summary>
+    void BeginPersistence();
+    
+    /// <summary>
     /// Stores the events of an event source.
+    /// If BeginPersistence was invoked before StoreAsync, events will be appended to the stream but they will be permanently persisted (commited) until SaveChangesAsync is invoked.
     /// </summary>
     /// <param name="eventSource">The event source with events to be persisted.</param>
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
     /// <typeparam name="TEventSource">The type of the event source.</typeparam>
     Task StoreAsync<TEventSource>(TEventSource eventSource, CancellationToken cancellationToken)
         where TEventSource : class, IEventSource;
+
+    /// <summary>
+    /// Completes a deferred persistence operation by permanently saving the events stored using StoreAsync.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token for the operation.</param>
+    /// <returns></returns>
+    Task SaveChangesAsync(CancellationToken cancellationToken);
     
     /// <summary>
     /// Loads an event source from an event store.
