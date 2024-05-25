@@ -8,9 +8,9 @@ public interface IEventPublisher
     /// <summary>
     /// Publishes events asynchronously.
     /// </summary>
-    /// <param name="eventSource">The event source with events to publish.</param>
+    /// <param name="aggregateRoot">The event source with events to publish.</param>
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
-    Task PublishAsync(IEventSource eventSource, CancellationToken cancellationToken);
+    Task PublishAsync(IAggregateRoot aggregateRoot, CancellationToken cancellationToken);
     
     /// <summary>
     /// Publishes events asynchronously.
@@ -22,8 +22,8 @@ public interface IEventPublisher
     /// <summary>
     /// Publishes events without waiting for a task for termination.
     /// </summary>
-    /// <param name="eventSource">The event source with events to publish.</param>
-    void PublishAndForget(IEventSource eventSource);
+    /// <param name="aggregateRoot">The event source with events to publish.</param>
+    void PublishAndForget(IAggregateRoot aggregateRoot);
     
     /// <summary>
     /// Publishes events without waiting for a task for termination.

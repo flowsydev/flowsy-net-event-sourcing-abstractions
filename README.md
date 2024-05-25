@@ -93,18 +93,17 @@ public sealed class ShoppingCartOrderPlaced : ShoppingCartEvent
 }
 ```
 
-## IEventSource
+## IAggregateRoot
 
-The **IEventSource** interface represents an object that can produce events in our application.
+An aggregate represents a cluster of domain objects that can be treated as a single unit for data changes.
+An object implementing the **IAggregateRoot** interface is responsible for ensuring the consistency of changes
+within the aggregate boundaries, as well as enforcing invariants.
 
-This interface can be implemented by our entities or aggregate roots to ensure the consistency of changes
-being made and enforce invariants.
-
-Though you can implement **IEventSource**, the **EventSource** abstract class in this package provides basic functionality to validate and apply events
-to a given entity of our domain.
+Though you can directly implement the **IAggregateRoot** interface, the **AggregateRoot** abstract class in this package
+provides basic functionality to validate and apply events to a given aggregate of our domain.
 
 ```csharp
-public sealed class ShoppingCart : EventSource
+public sealed class ShoppingCart : AggregateRoot
 {
     public string UserId { get; private set; }
     public bool UserIsPremium { get; private set; }
@@ -124,7 +123,7 @@ public sealed class ShoppingCart : EventSource
         switch (@event)
         {
             case ShoppingCartCreated e:
-                // The EventSource base class implements the Id property of type string defined in IEventSource.      
+                // The AggregateRoot base class implements the Id property of type string defined in IAggregateRoot.      
                 // A convinient value for this property would be the shopping cart ID, so all
                 // the events related to a single shopping cart can be grouped using this identifer.
                 Id = e.ShoppingCartId;
@@ -230,18 +229,38 @@ public sealed class ShoppingCart : EventSource
 }
 ```
 
-## Event Source & Application Commands
+## Aggregate Root & Application Commands
 
-It's a common practice to implement the CQRS pattern to perform actions on our entities or aggregate roots.
-The following examples demonstrate how to use the ShoppingCart event source to create and manage the user's shopping cart.
+It's a common practice to implement the CQRS pattern to perform actions on our aggregate roots.
+The following examples demonstrate how to use the ShoppingCart aggregate root to create and manage the user's shopping cart.
 
-### The Event Repository
+### The Aggregate Repository
 
-This package includes the **IEventRepository** interface with methods to store and load events from some event store.
+This package includes the **IAggregateRepository** interface with methods to save and load events from some event store.
+
+We can define interfaces for the repositories of our domain objects and use them to manage the persistence of our aggregates.
+
+```csharp
+// Interface for the shopping cart repository used to manage the persistence of shopping cart aggregates. 
+public interface IShoppingCartRepository : IAggregateRepository<ShoppingCart>
+{
+}
+
+// Interface for the product repository used to manage the persistence of product aggregates.
+public interface IProductRepository : IAggregateRepository<Product>
+{
+}
+
+// Interface for the user repository used to manage the persistence of user aggregates.
+public interface IUserRepository : IAggregateRepository<ShoppingCart>
+{
+}
+```
 
 **Note:** The implementation of this interface is beyond the scope of this library, but you can take a look
-at the [Flowsy.EventSourcing.Sql](https://www.nuget.org/packages/Flowsy.EventSourcing.Sql) package, which includes an implementation based on [Marten](https://martendb.io/),
-a document database and event store library with PostgreSQL as the underlying database.
+at the [Flowsy.EventSourcing.Sql](https://www.nuget.org/packages/Flowsy.EventSourcing.Sql) package,
+which includes an implementation based on PostgreSQL and its JSON capabilities as the underlying event store.
+
 
 ### Create a Shopping Cart
 
@@ -260,28 +279,28 @@ public class CreateShoppingCartCommand
 
 public class CreateShoppingCartCommandHandler
 {
-    private readonly IEventRepository _eventRepository;
+    private readonly IShoppingCartRepository _shoppingCartRepository;
     private readonly IUserRepository _userRepository;
   
     public CreateShoppingCartCommandHandler(
-        IEventRepository eventRepository,
+        IShoppingCartRepository eventRepository,
         IUserRepository userRepository
         )
     {
-        _eventRepository = eventRepository;
+        _shoppingCartRepository = eventRepository;
         _userRepository = userRepository;
     }
   
     public async Task HandleAsync(CreateShoppingCartCommand command, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken);
+        var user = await _userRepository.LoadAsync(command.UserId, cancellationToken);
         if (user is null)
-            throw new UserNotFoundException(userId);
+            throw new EntityNotFoundException($"User not found: {command.UserId}");
           
         var shoppingCart = new ShoppingCart();      
         shoppingCart.CreateNew(command.ShoppingCartId, user);
       
-        await _eventRepository.StoreAsync(shoppingCart, cancellationToken);
+        await _shoppingCartRepository.SaveAsync(shoppingCart, cancellationToken);
     }
 }
 ```
@@ -312,25 +331,25 @@ public class AddShoppingCartItemCommand
 
 public class AddShoppingCartItemCommandHandler
 {
-    private readonly IEventRepository _eventRepository;
+    private readonly IShoppingCartRepository _shoppingCartRepository;
     private readonly IProductRepository _productRepository;
   
     public AddShoppingCartItemCommandHandler(
-        IEventRepository eventRepository,
+        IShoppingCartRepository eventRepository,
         IProductRepository productRepository
         )
     {
-        _eventRepository = eventRepository;
+        _shoppingCartRepository = eventRepository;
         _productRepository = productRepository;
     }
   
     public async Task HandleAsync(AddShoppingCartItemCommand command, CancellationToken cancellationToken)
     {
-        var shoppingCart = _eventRepository.LoadAsync(command.ShoppingCartId, cancellationToken);
+        var shoppingCart = _shoppingCartRepository.LoadAsync(command.ShoppingCartId, cancellationToken);
         if (shoppingCart is null)
             throw new EntityNotFoundException($"Shopping cart not found: {command.ShoppingCartId}");
       
-        var product = await _productRepository.GetByIdAsync(command.ProductId, cancellationToken);
+        var product = await _productRepository.LoadAsync(command.ProductId, cancellationToken);
         if (product is null)
             throw new EntityNotFoundException($"Product not found: {command.ProductId}");
       
@@ -340,7 +359,7 @@ public class AddShoppingCartItemCommandHandler
             command.Quantity
             );
       
-        await _eventRepository.StoreAsync(shoppingCart, cancellationToken);
+        await _shoppingCartRepository.SaveAsync(shoppingCart, cancellationToken);
     }
 }
 ```
@@ -365,22 +384,22 @@ public class RemoveShoppingCartItemCommand
 
 public class RemoveShoppingCartItemCommandHandler
 {
-    private readonly IEventRepository _eventRepository;
+    private readonly IShoppingCartRepository _shoppingCartRepository;
   
-    public RemoveShoppingCartItemCommandHandler(IEventRepository eventRepository)
+    public RemoveShoppingCartItemCommandHandler(IShoppingCartRepository eventRepository)
     {
-        _eventRepository = eventRepository;
+        _shoppingCartRepository = eventRepository;
     }
   
     public async Task HandleAsync(RemoveShoppingCartItemCommand command, CancellationToken cancellationToken)
     {
-        var shoppingCart = _eventRepository.LoadAsync(command.ShoppingCartId, cancellationToken);
+        var shoppingCart = _shoppingCartRepository.LoadAsync(command.ShoppingCartId, cancellationToken);
         if (shoppingCart is null)
             throw new EntityNotFoundException($"Shopping cart not found: {command.ShoppingCartId}");
       
         shoppingCart.RemoveItem(command.ShoppingCartItemId);
       
-        await _eventRepository.StoreAsync(shoppingCart, cancellationToken);
+        await _shoppingCartRepository.StoreAsync(shoppingCart, cancellationToken);
     }
 }
 ```
@@ -417,26 +436,26 @@ public class PlaceShoppingCartOrderCommand
 
 public class PlaceShoppingCartOrderCommandHandler
 {
-    private readonly IEventRepository _eventRepository;
+    private readonly IShoppingCartRepository _shoppingCartRepository;
     private readonly IPaymentService _paymentService;
   
     public PlaceShoppingCartOrderCommandHandler(
-        IEventRepository eventRepository;,
+        IShoppingCartRepository eventRepository;,
         IPaymentService paymentService
         )
     {
-        _eventRepository = eventRepository;
+        _shoppingCartRepository = eventRepository;
         _paymentService = paymentService;
     }
   
     public async Task HandleAsync(PlaceShoppingCartOrderCommand command, CancellationToken cancellationToken)
     {
-        var shoppingCart = _eventRepository.LoadAsync(command.ShoppingCartId, cancellationToken);
+        var shoppingCart = _shoppingCartRepository.LoadAsync(command.ShoppingCartId, cancellationToken);
         if (shoppingCart is null)
             throw new EntityNotFoundException($"Shopping cart not found: {command.ShoppingCartId}");
       
         // Load user data
-        var user = await unitOfWork.UserRepository.GetByIdAsync(shoppingCart.UserId, cancellationToken);
+        var user = await unitOfWork.UserRepository.LoadAsync(shoppingCart.UserId, cancellationToken);
         if (user is null)
             throw new EntityNotFoundException($"User not found: {shoppingCart.UserId}");
       
@@ -455,7 +474,7 @@ public class PlaceShoppingCartOrderCommandHandler
             );
       
         // Persist the shopping cart events only if the payment was processed successfully
-        await _eventRepository.StoreAsync(shoppingCart, cancellationToken);
+        await _shoppingCartRepository.StoreAsync(shoppingCart, cancellationToken);
     }
 }
 ```
@@ -466,9 +485,9 @@ By implementing the **IEventPublisher** interface we can notify another componen
 For instance, we could define an abstract Event class and inherit all our events from it, then use the [MediatR](https://www.nuget.org/packages/MediatR)
 library to publish our event as a notification.
 
-The **EventRepository** class from the [Flowsy.EventSourcing.Sql](https://www.nuget.org/packages/Flowsy.EventSourcing.Sql) package
-implements the **IEventRepository** interface defined in this package and accepts an optional **IEventPublisher** instance through
-its constructor, so it can automatically publish the events of an **IEventSource** once they are persisted in the event store.
+The **AggregateRepository** class from the [Flowsy.EventSourcing.Sql](https://www.nuget.org/packages/Flowsy.EventSourcing.Sql) package
+implements the **IAggregateRepository** interface defined in this package and accepts an optional **IEventPublisher** instance through
+its constructor, so it can automatically publish the events of an **IAggregateRoot** once they are saved to the event store.
 
 ### Event Publisher
 
@@ -483,9 +502,9 @@ public sealed class EventPublisher : IEventPublisher
     }
 
     // Publish events asynchronously
-    public async Task PublishAsync(IEventSource eventSource, CancellationToken cancellationToken)
+    public async Task PublishAsync(IAggregateRoot aggregateRoot, CancellationToken cancellationToken)
     {
-        await PublishAsync(eventSource.Events, cancellationToken);
+        await PublishAsync(aggregateRoot.Events, cancellationToken);
     }
 
     // Publish events asynchronously
@@ -496,9 +515,9 @@ public sealed class EventPublisher : IEventPublisher
     }
   
     // Publish events without waiting for a task for termination.
-    public void PublishAndForget(IEventSource eventSource)
+    public void PublishAndForget(IAggregateRoot aggregateRoot)
     {
-        PublishAndForget(eventSource.Events);
+        PublishAndForget(aggregateRoot.Events);
     }
 
     // Publish events without waiting for a task for termination.
