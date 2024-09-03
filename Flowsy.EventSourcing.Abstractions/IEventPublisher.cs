@@ -3,31 +3,33 @@ namespace Flowsy.EventSourcing.Abstractions;
 /// <summary>
 /// Publishes events to notify another components of the application when relevant facts occur.
 /// </summary>
-public interface IEventPublisher
+public interface IEventPublisher<in TAggregateRoot, TEventBase>
+    where TAggregateRoot : AggregateRoot<TEventBase>
+    where TEventBase : class, IEvent
 {
     /// <summary>
     /// Publishes events asynchronously.
     /// </summary>
-    /// <param name="aggregateRoot">The event source with events to publish.</param>
+    /// <param name="aggregate">The event source with events to publish.</param>
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
-    Task PublishAsync(IAggregateRoot aggregateRoot, CancellationToken cancellationToken);
+    Task PublishAsync(TAggregateRoot aggregate, CancellationToken cancellationToken);
     
     /// <summary>
     /// Publishes events asynchronously.
     /// </summary>
     /// <param name="events">The events to publish.</param>
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
-    Task PublishAsync(IEnumerable<IEvent> events, CancellationToken cancellationToken);
+    Task PublishAsync(IEnumerable<TEventBase> events, CancellationToken cancellationToken);
     
     /// <summary>
     /// Publishes events without waiting for a task for termination.
     /// </summary>
-    /// <param name="aggregateRoot">The event source with events to publish.</param>
-    void PublishAndForget(IAggregateRoot aggregateRoot);
+    /// <param name="aggregate">The event source with events to publish.</param>
+    void PublishAndForget(TAggregateRoot aggregate);
     
     /// <summary>
     /// Publishes events without waiting for a task for termination.
     /// </summary>
     /// <param name="events">The events to publish.</param>
-    void PublishAndForget(IEnumerable<IEvent> events);
+    void PublishAndForget(IEnumerable<TEventBase> events);
 }
